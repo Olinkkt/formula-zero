@@ -7,10 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Flag, Trophy, Users, Activity, Settings } from 'lucide-react'
+import { Flag, Trophy, Users, Activity } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { AdminAuthDialog } from './admin-auth-dialog'
-import { AdminPanel } from './admin-panel'
 
 type Driver = {
   color: string
@@ -50,6 +48,12 @@ type Race = {
   status: 'upcoming' | 'completed'
 }
 
+type RaceResult = {
+  race: string
+  date: string
+  results: Record<string, number> // body z daného závodu
+}
+
 const nextRace: Race = {
   name: "Grand Prix Great Britain",
   date: "2025-02-02T18:00:00.000+01:00",
@@ -62,8 +66,6 @@ const FormulaZeroChampionship = () => {
   const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
   const [timeLeft, setTimeLeft] = useState<string>('')
-  const [isAdminDialogOpen, setIsAdminDialogOpen] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -104,51 +106,66 @@ const FormulaZeroChampionship = () => {
     return () => clearInterval(timer)
   }, [nextRace.date])
 
-  const raceData: RaceData[] = [
+  const raceData: RaceResult[] = [
     {
       race: 'Brazílie',
-      Dominik: 11,
-      Macim: 6,
-      Kuba: 4,
-      Olda: 8,
-      Dan: 2,
-      Míra: 1,
+      date: '2024-01-01',
+      results: {
+        Dominik: 11,
+        Macim: 6,
+        Kuba: 4,
+        Olda: 8,
+        Dan: 2,
+        Míra: 1,
+      }
     },
     {
       race: 'Imola',
-      Dominik: 22,
-      Macim: 10,
-      Kuba: 12,
-      Olda: 14,
-      Dan: 4,
-      Míra: 2,
+      date: '2024-01-01',
+      results: {
+        Dominik: 11,
+        Macim: 4,
+        Kuba: 8,
+        Olda: 6,
+        Dan: 2,
+        Míra: 1,
+      }
     },
     {
       race: 'Monako',
-      Dominik: 33,
-      Macim: 16,
-      Kuba: 20,
-      Olda: 18,
-      Dan: 6,
-      Míra: 3,
+      date: '2024-01-01',
+      results: {
+        Dominik: 11,
+        Macim: 6,
+        Kuba: 8,
+        Olda: 4,
+        Dan: 2,
+        Míra: 1,
+      }
     },
     {
       race: 'Katalánsko',
-      Dominik: 43,
-      Macim: 24,
-      Kuba: 27,
-      Olda: 22,
-      Dan: 8,
-      Míra: 4,
+      date: '2024-01-01',
+      results: {
+        Dominik: 10,
+        Macim: 8,
+        Kuba: 7,
+        Olda: 4,
+        Dan: 2,
+        Míra: 1,
+      }
     },
     {
       race: 'Kanada',
-      Dominik: 48,
-      Macim: 34,
-      Kuba: 35,
-      Olda: 28,
-      Dan: 10,
-      Míra: 5,
+      date: '2024-01-01',
+      results: {
+        Dominik: 5,
+        Macim: 10,
+        Kuba: 8,
+        Olda: 6,
+        Dan: 2,
+        Míra: 1,
+      }
     }
   ]
 
@@ -162,18 +179,34 @@ const FormulaZeroChampionship = () => {
   }
 
   const currentPoints: Standings = {
-    drivers: Object.entries(raceData[raceData.length - 1])
-      .filter(([key]) => key !== 'race')
-      .sort(([, a], [, b]) => (b as number) - (a as number))
-      .map(([driver, points], index, array) => ({
+    drivers: Object.entries(drivers).map(([driver]) => {
+      // Spočítáme celkové body pro každého jezdce ze všech závodů
+      const totalPoints = raceData.reduce((sum, race) => 
+        sum + race.results[driver], 0
+      )
+      
+      // Najdeme nejvyšší počet bodů pro výpočet rozdílu
+      const maxTotalPoints = Math.max(
+        ...Object.keys(drivers).map(d => 
+          raceData.reduce((sum, race) => sum + race.results[d], 0)
+        )
+      )
+
+      return {
         driver,
-        points: points as number,
-        gap: index === 0 ? 0 : (array[0][1] as number) - (points as number)
-      })),
+        points: totalPoints,
+        gap: totalPoints === maxTotalPoints ? 0 : maxTotalPoints - totalPoints
+      }
+    }).sort((a, b) => b.points - a.points),
+    
     constructors: Object.entries(
+      // Spočítáme body pro každý tým
       Object.entries(drivers).reduce<Record<string, number>>((teams, [driver, { team }]) => {
-        const points = raceData[raceData.length - 1][driver] as number
-        teams[team] = (teams[team] || 0) + points
+        // Sečteme body jezdce ze všech závodů
+        const driverPoints = raceData.reduce((sum, race) => 
+          sum + race.results[driver], 0
+        )
+        teams[team] = (teams[team] || 0) + driverPoints
         return teams
       }, {})
     )
@@ -236,9 +269,7 @@ const FormulaZeroChampionship = () => {
             whileTap={{ scale: 0.95 }}
             className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all
               ${focusedDriver === entry.value ? 'bg-accent' : 'hover:bg-accent/50'}`}
-            onMouseEnter={() => {
-              setFocusedDriver(entry.value)
-            }}
+            onMouseEnter={() => setFocusedDriver(entry.value)}
             onMouseLeave={() => setFocusedDriver(null)}
           >
             <div 
@@ -259,12 +290,24 @@ const FormulaZeroChampionship = () => {
 
   // Get min and max points for better Y-axis scaling
   const allPoints = raceData.flatMap(race => 
-    Object.entries(race)
-      .filter(([key]) => key !== 'race')
-      .map(([, points]) => points as number)
+    Object.values(race.results)
   )
   const minPoints = Math.floor(Math.min(...allPoints))
   const maxPoints = Math.ceil(Math.max(...allPoints) * 1.1) // Add 10% padding at the top
+
+  // Funkce pro výpočet kumulativních bodů
+  const calculateTotalPoints = (races: RaceResult[], upToIndex: number) => {
+    const totals: Record<string, number> = {}
+    
+    for (let i = 0; i <= upToIndex; i++) {
+      const race = races[i]
+      Object.entries(race.results).forEach(([driver, points]) => {
+        totals[driver] = (totals[driver] || 0) + points
+      })
+    }
+    
+    return totals
+  }
 
   if (!mounted) return null
 
@@ -299,13 +342,6 @@ const FormulaZeroChampionship = () => {
             aria-label={theme === 'dark' ? "Přepnout na světlý režim" : "Přepnout na tmavý režim"}
           >
             {theme === 'dark' ? '🌙' : '☀️'}
-          </button>
-          <button
-            onClick={() => setIsAdminDialogOpen(true)}
-            className="p-2 rounded-full hover:bg-accent/50 transition-colors"
-            aria-label="Admin přístup"
-          >
-            <Settings className="w-4 h-4" />
           </button>
         </div>
       </CardHeader>
@@ -342,7 +378,10 @@ const FormulaZeroChampionship = () => {
                   <div className="h-[400px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
-                        data={raceData}
+                        data={raceData.map((race, index) => ({
+                          race: race.race,
+                          ...calculateTotalPoints(raceData, index)
+                        }))}
                         margin={{
                           top: 20,
                           right: 30,
@@ -358,7 +397,7 @@ const FormulaZeroChampionship = () => {
                           padding={{ left: 20, right: 20 }}
                         />
                         <YAxis 
-                          domain={[minPoints, maxPoints]}
+                          domain={[0, maxPoints]}
                           tick={{ fill: 'currentColor' }}
                           tickLine={{ stroke: 'currentColor' }}
                           label={{ value: 'Body', angle: -90, position: 'insideLeft', fill: 'currentColor', offset: -5 }}
@@ -470,25 +509,6 @@ const FormulaZeroChampionship = () => {
           </AnimatePresence>
         </Tabs>
       </CardContent>
-
-      <AdminAuthDialog 
-        open={isAdminDialogOpen}
-        onOpenChange={setIsAdminDialogOpen}
-        onAuthenticated={() => {
-          setIsAdmin(true)
-          setIsAdminDialogOpen(false)
-        }}
-      />
-
-      {isAdmin && (
-        <div className="p-4 border-t">
-          <AdminPanel 
-            drivers={drivers}
-            raceData={raceData}
-            onLogout={() => setIsAdmin(false)}
-          />
-        </div>
-      )}
     </Card>
   )
 }
