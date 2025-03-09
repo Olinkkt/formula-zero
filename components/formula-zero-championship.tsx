@@ -44,19 +44,16 @@ type Standings = {
 
 type Race = {
   name: string
-  date: string
   status: 'upcoming' | 'completed'
 }
 
 type RaceResult = {
   race: string
-  date: string
   results: Record<string, number> // body z daného závodu
 }
 
 const nextRace: Race = {
-  name: "Grand Prix Great Britain",
-  date: "2025-02-02T18:00:00.000+01:00",
+  name: "Hungarian Grand Prix",
   status: "upcoming"
 }
 
@@ -71,45 +68,9 @@ const FormulaZeroChampionship = () => {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date()
-      const raceTime = new Date(nextRace.date)
-      const distance = raceTime.getTime() - now.getTime()
-
-      // Debug informace
-      console.log({
-        currentTime: now.toLocaleString(),
-        currentTimeISO: now.toISOString(),
-        raceTime: raceTime.toLocaleString(),
-        raceTimeISO: raceTime.toISOString(),
-        distance: distance,
-        distanceInDays: distance / (1000 * 60 * 60 * 24)
-      })
-
-      if (distance < 0) {
-        setTimeLeft('Závod začal!')
-        return false
-      } else {
-        const days = Math.floor(distance / (1000 * 60 * 60 * 24))
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
-        
-        setTimeLeft(`${days}d ${hours}h ${minutes}m`)
-        return true
-      }
-    }
-
-    // Spustit výpočet okamžitě a pak každou minutu
-    calculateTimeLeft()
-    const timer = setInterval(calculateTimeLeft, 1000 * 60)
-    return () => clearInterval(timer)
-  }, [nextRace.date])
-
   const raceData: RaceResult[] = [
     {
       race: 'Brazílie',
-      date: '2024-01-01',
       results: {
         Dominik: 11,
         Macim: 6,
@@ -121,7 +82,6 @@ const FormulaZeroChampionship = () => {
     },
     {
       race: 'Imola',
-      date: '2024-01-01',
       results: {
         Dominik: 11,
         Macim: 4,
@@ -133,7 +93,6 @@ const FormulaZeroChampionship = () => {
     },
     {
       race: 'Monako',
-      date: '2024-01-01',
       results: {
         Dominik: 11,
         Macim: 6,
@@ -145,7 +104,6 @@ const FormulaZeroChampionship = () => {
     },
     {
       race: 'Katalánsko',
-      date: '2024-01-01',
       results: {
         Dominik: 10,
         Macim: 8,
@@ -157,12 +115,22 @@ const FormulaZeroChampionship = () => {
     },
     {
       race: 'Kanada',
-      date: '2024-01-01',
       results: {
         Dominik: 5,
         Macim: 10,
         Kuba: 8,
         Olda: 6,
+        Dan: 2,
+        Míra: 1,
+      }
+    },
+    {
+      race: 'Great Britain',
+      results: {
+        Dominik: 11,
+        Macim: 8,
+        Kuba: 6,
+        Olda: 4,
         Dan: 2,
         Míra: 1,
       }
@@ -331,8 +299,6 @@ const FormulaZeroChampionship = () => {
             className="text-sm text-muted-foreground"
           >
             Příští závod: <span className="font-medium">{nextRace.name}</span>
-            <span className="mx-2">•</span>
-            <span className="font-mono">{timeLeft}</span>
           </motion.div>
         </div>
         <div className="flex items-center gap-4">
