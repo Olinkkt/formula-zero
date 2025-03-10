@@ -53,7 +53,7 @@ type RaceResult = {
 }
 
 const nextRace: Race = {
-  name: "Hungarian Grand Prix",
+  name: "Belgium Grand Prix",
   status: "upcoming"
 }
 
@@ -130,6 +130,17 @@ const FormulaZeroChampionship = () => {
         Dominik: 11,
         Macim: 8,
         Kuba: 6,
+        Olda: 4,
+        Dan: 2,
+        Míra: 1,
+      }
+    },
+    {
+      race: 'Hungary',
+      results: {
+        Dominik: 10,
+        Macim: 8,
+        Kuba: 7,
         Olda: 4,
         Dan: 2,
         Míra: 1,

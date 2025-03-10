@@ -12,7 +12,7 @@ export default function Home() {
           <FormulaZeroChampionship />
         </div>
         <footer className="text-center text-muted-foreground mt-8">
-          <p>Poháněno vysokooktanovým palivem a duchem soutěže! 🏎️💨</p>
+          <p>Poháněno elektrikou a duchem soutěže! 🏎️💨</p>
         </footer>
       </div>
     </main>
