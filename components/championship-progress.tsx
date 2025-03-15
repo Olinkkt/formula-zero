@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Dot } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Drivers, RaceResult } from './formula-zero-championship'
 import { RaceDetails } from './race-details'
 
@@ -21,6 +21,7 @@ type CustomTooltipProps = {
   label?: string
 }
 
+// Definice typu pro vlastní bod v grafu
 type CustomDotProps = {
   cx: number
   cy: number
@@ -128,7 +129,7 @@ export const ChampionshipProgress = ({ raceData, drivers }: ChampionshipProgress
   }
   
   // Vlastní aktivní bod pro graf
-  const CustomActiveDot = (props: any) => {
+  const CustomActiveDot = (props: CustomDotProps) => {
     const { cx, cy, stroke, payload } = props
     
     return (
@@ -184,8 +185,8 @@ export const ChampionshipProgress = ({ raceData, drivers }: ChampionshipProgress
               dataKey={driver}
               stroke={color}
               strokeWidth={focusedDriver === driver ? 2 : 1.5}
-              dot={<CustomDot />}
-              activeDot={<CustomActiveDot />}
+              dot={(props: any) => <CustomDot {...props} />}
+              activeDot={(props: any) => <CustomActiveDot {...props} />}
               opacity={focusedDriver ? (focusedDriver === driver ? 1 : 0.15) : 1}
               connectNulls
             />
