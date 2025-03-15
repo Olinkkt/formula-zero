@@ -11,48 +11,73 @@ import {
   DialogFooter
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Award, Flag, TrendingUp, Clock, ChevronDown, ChevronUp } from 'lucide-react'
-import { Driver, RaceResult } from './formula-zero-championship'
+import { Award, Users, TrendingUp, BarChart, ChevronDown, ChevronUp } from 'lucide-react'
+import { Drivers, RaceResult } from './formula-zero-championship'
 
-type DriverProfileProps = {
+type TeamProfileProps = {
   isOpen: boolean
   onClose: () => void
-  driverName: string
-  driver: Driver
+  teamName: string
+  drivers: Drivers
   raceData: RaceResult[]
 }
 
-export const DriverProfile = ({ 
+export const TeamProfile = ({ 
   isOpen, 
   onClose, 
-  driverName, 
-  driver, 
+  teamName, 
+  drivers, 
   raceData 
-}: DriverProfileProps) => {
+}: TeamProfileProps) => {
   const [showAllRaces, setShowAllRaces] = useState(false)
   
-  // Výpočet statistik jezdce
-  const totalPoints = raceData.reduce((sum, race) => 
-    sum + race.results[driverName], 0
+  // Získání jezdců týmu
+  const teamDrivers = Object.entries(drivers)
+    .filter(([_, driver]) => driver.team === teamName)
+    .map(([name]) => name)
+  
+  // Výpočet celkových bodů týmu
+  const totalPoints = teamDrivers.reduce((sum, driver) => 
+    sum + raceData.reduce((driverSum, race) => 
+      driverSum + race.results[driver], 0
+    ), 0
   )
   
-  const bestResult = Math.max(...raceData.map(race => race.results[driverName]))
-  
-  const bestRace = raceData.find(race => 
-    race.results[driverName] === bestResult
-  )?.race || ''
-  
-  const averagePoints = totalPoints / raceData.length
-  
-  // Získání pozic v jednotlivých závodech
-  const positions = raceData.map(race => {
-    const results = Object.entries(race.results)
-      .sort(([, a], [, b]) => b - a)
-      .map(([driver]) => driver)
+  // Výpočet bodů týmu v jednotlivých závodech
+  const racePoints = raceData.map(race => {
+    const points = teamDrivers.reduce((sum, driver) => 
+      sum + race.results[driver], 0
+    )
     
     return {
       race: race.race,
-      position: results.indexOf(driverName) + 1
+      points
+    }
+  })
+  
+  // Nejlepší závod týmu
+  const bestRace = [...racePoints].sort((a, b) => b.points - a.points)[0]
+  
+  // Průměrné body na závod
+  const averagePoints = totalPoints / raceData.length
+  
+  // Pozice týmu v jednotlivých závodech
+  const positions = raceData.map(race => {
+    // Spočítáme body všech týmů v tomto závodě
+    const teamResults = Object.entries(drivers).reduce<Record<string, number>>((teams, [driver, { team }]) => {
+      teams[team] = (teams[team] || 0) + race.results[driver]
+      return teams
+    }, {})
+    
+    // Seřadíme týmy podle bodů
+    const sortedTeams = Object.entries(teamResults)
+      .sort(([, a], [, b]) => b - a)
+      .map(([team]) => team)
+    
+    return {
+      race: race.race,
+      position: sortedTeams.indexOf(teamName) + 1,
+      points: teamResults[teamName]
     }
   })
   
@@ -64,6 +89,7 @@ export const DriverProfile = ({
     ? sortedPositions 
     : sortedPositions.slice(0, 5)
   
+  // Nejlepší umístění týmu
   const bestPosition = Math.min(...positions.map(p => p.position))
   
   return (
@@ -71,17 +97,33 @@ export const DriverProfile = ({
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <div 
-              className="w-5 h-5 rounded-full" 
-              style={{ backgroundColor: driver.color }}
-            />
-            <span>{driverName}</span>
-            <span className="text-sm text-muted-foreground">({driver.team})</span>
+            <span>{teamName}</span>
           </DialogTitle>
           <DialogDescription>
-            Statistiky jezdce v aktuální sezóně
+            Statistiky týmu v aktuální sezóně
           </DialogDescription>
         </DialogHeader>
+        
+        <div className="py-2">
+          <h4 className="text-sm font-medium mb-2">Jezdci</h4>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {teamDrivers.map((driver, index) => (
+              <motion.div 
+                key={driver}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index }}
+                className="flex items-center gap-2 p-2 rounded-md bg-accent/20"
+              >
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: drivers[driver].color }}
+                />
+                <span>{driver}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
         
         <div className="grid grid-cols-2 gap-4 py-4">
           <motion.div 
@@ -112,10 +154,10 @@ export const DriverProfile = ({
             transition={{ delay: 0.3 }}
             className="flex flex-col items-center justify-center p-3 rounded-lg bg-accent/30"
           >
-            <Flag className="w-5 h-5 mb-2 text-primary" />
+            <BarChart className="w-5 h-5 mb-2 text-primary" />
             <span className="text-sm text-muted-foreground">Nejlepší závod</span>
-            <span className="text-xl font-bold">{bestRace}</span>
-            <span className="text-sm text-muted-foreground">({bestResult} bodů)</span>
+            <span className="text-xl font-bold">{bestRace.race}</span>
+            <span className="text-sm text-muted-foreground">({bestRace.points} bodů)</span>
           </motion.div>
           
           <motion.div 
@@ -124,7 +166,7 @@ export const DriverProfile = ({
             transition={{ delay: 0.4 }}
             className="flex flex-col items-center justify-center p-3 rounded-lg bg-accent/30"
           >
-            <Clock className="w-5 h-5 mb-2 text-primary" />
+            <Users className="w-5 h-5 mb-2 text-primary" />
             <span className="text-sm text-muted-foreground">Průměr na závod</span>
             <span className="text-2xl font-bold">{averagePoints.toFixed(1)}</span>
           </motion.div>
@@ -136,28 +178,22 @@ export const DriverProfile = ({
           </h4>
           <div className="space-y-2">
             <AnimatePresence initial={false}>
-              {displayPositions.map((position, index) => {
-                const raceIndex = showAllRaces 
-                  ? raceData.length - 1 - index 
-                  : raceData.length - 1 - index
-                
-                return (
-                  <motion.div 
-                    key={position.race}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ delay: 0.05 * index }}
-                    className="flex justify-between items-center p-2 rounded-md bg-accent/20"
-                  >
-                    <span>{position.race}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">{position.position}. místo</span>
-                      <span className="font-medium">{raceData[raceIndex].results[driverName]} bodů</span>
-                    </div>
-                  </motion.div>
-                )
-              })}
+              {displayPositions.map((position, index) => (
+                <motion.div 
+                  key={position.race}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ delay: 0.05 * index }}
+                  className="flex justify-between items-center p-2 rounded-md bg-accent/20"
+                >
+                  <span>{position.race}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{position.position}. místo</span>
+                    <span className="font-medium">{position.points} bodů</span>
+                  </div>
+                </motion.div>
+              ))}
             </AnimatePresence>
           </div>
           

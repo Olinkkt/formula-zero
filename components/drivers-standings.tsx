@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Drivers, RaceResult } from './formula-zero-championship'
 import { DriverProfile } from './driver-profile'
 
@@ -44,7 +43,7 @@ export const DriversStandings = ({ raceData, drivers }: DriversStandingsProps) =
 
   return (
     <>
-      <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+      <div className="h-[400px] w-full rounded-md border p-4">
         <div className="space-y-4">
           {driverStandings.map(({ driver, points, gap }, index) => (
             <motion.div
@@ -78,7 +77,7 @@ export const DriversStandings = ({ raceData, drivers }: DriversStandingsProps) =
             </motion.div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
       
       {selectedDriver && (
         <DriverProfile

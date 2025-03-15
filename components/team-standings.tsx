@@ -1,11 +1,11 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Activity } from 'lucide-react'
 import { Drivers, RaceResult } from './formula-zero-championship'
+import { TeamProfile } from './team-profile'
 
 type TeamStandingsProps = {
   raceData: RaceResult[]
@@ -19,6 +19,8 @@ type TeamStanding = {
 }
 
 export const TeamStandings = ({ raceData, drivers }: TeamStandingsProps) => {
+  const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
+  
   // Výpočet bodů týmů
   const teamStandings: TeamStanding[] = Object.entries(
     // Spočítáme body pro každý tým
@@ -39,30 +41,45 @@ export const TeamStandings = ({ raceData, drivers }: TeamStandingsProps) => {
   }))
 
   return (
-    <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-      <div className="space-y-4">
-        {teamStandings.map(({ team, points, gap }, index) => (
-          <motion.div
-            key={team}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="flex items-center justify-between p-2 rounded-lg bg-accent/50"
-          >
-            <div className="flex items-center gap-3">
-              <Badge variant={index === 0 ? "default" : "secondary"} className="w-8 h-8 rounded-full flex items-center justify-center">
-                {index + 1}
-              </Badge>
-              <span className="font-bold">{team}</span>
-            </div>
-            <div className="flex gap-4 items-center">
-              <span className="font-bold">{points}</span>
-              {gap > 0 && <span className="text-muted-foreground">-{gap}</span>}
-              <Activity className="w-4 h-4" />
-            </div>
-          </motion.div>
-        ))}
+    <>
+      <div className="h-[400px] w-full rounded-md border p-4">
+        <div className="space-y-4">
+          {teamStandings.map(({ team, points, gap }, index) => (
+            <motion.div
+              key={team}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="flex items-center justify-between p-2 rounded-lg bg-accent/50 hover:bg-accent cursor-pointer"
+              onClick={() => setSelectedTeam(team)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="flex items-center gap-3">
+                <Badge variant={index === 0 ? "default" : "secondary"} className="w-8 h-8 rounded-full flex items-center justify-center">
+                  {index + 1}
+                </Badge>
+                <span className="font-bold">{team}</span>
+              </div>
+              <div className="flex gap-4 items-center">
+                <span className="font-bold">{points}</span>
+                {gap > 0 && <span className="text-muted-foreground">-{gap}</span>}
+                <Activity className="w-4 h-4" />
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
-    </ScrollArea>
+      
+      {selectedTeam && (
+        <TeamProfile
+          isOpen={!!selectedTeam}
+          onClose={() => setSelectedTeam(null)}
+          teamName={selectedTeam}
+          drivers={drivers}
+          raceData={raceData}
+        />
+      )}
+    </>
   )
 } 
