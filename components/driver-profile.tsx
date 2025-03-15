@@ -75,8 +75,10 @@ export const DriverProfile = ({
               className="w-5 h-5 rounded-full" 
               style={{ backgroundColor: driver.color }}
             />
-            <span>{driverName}</span>
-            <span className="text-sm text-muted-foreground">({driver.team})</span>
+            <div className="flex items-center">
+              <span className="font-semibold">{driverName}</span>
+              <span className="text-sm text-muted-foreground ml-2 self-center">({driver.team})</span>
+            </div>
           </DialogTitle>
           <DialogDescription>
             Statistiky jezdce v aktuální sezóně
